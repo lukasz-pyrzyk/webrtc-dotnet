@@ -10,7 +10,7 @@ app.UseExceptionHandler("/Error");
 app.UseStaticFiles();
 app.UseRouting();
 app.UseAuthorization();
-app.MapHub<ChannelHub>("/WebRTCHub");
+app.MapHub<ChannelHub>("/channel");
 
 app.MapRazorPages();
 
