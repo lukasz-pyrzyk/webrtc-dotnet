@@ -11,13 +11,14 @@ let room = {
 
 $(rooms).DataTable({
     columns: [
-        { data: 'Id', "width": "15%" },
-        { data: 'Name' },
-        { data: 'Button' },
+        { data: 'Id', title: 'Id', width: "15%" },
+        { data: 'Name', title: "Name" },
+        { data: 'Button', title: "Options", width: "15%" },
     ],
-    "lengthChange": false,
-    "searching": false,
-    "language": {
+    paging: false,
+    lengthChange: false,
+    searching: false,
+    language: {
         "emptyTable": "No room available, create a new one"
     }
 });
@@ -37,31 +38,22 @@ const configuration = {
 
 const connection = new RTCPeerConnection(configuration);
 
-function setupMediaConfiguration() {
-
-    const mediaConfiguration = {
-        audio: true,
-        video: true
-    }
-
-    navigator.mediaDevices
-        .getUserMedia(mediaConfiguration)
-        .then(stream => {
-            connection.addStream(stream);
-            localVideo.srcObject = stream;
-        })
-        .catch((err) => {
-            alert(`Media configuration error ${err}`)
-        });
+const mediaConfiguration = {
+    audio: true,
+    video: true
 }
 
-setupMediaConfiguration();
+navigator.mediaDevices
+    .getUserMedia(mediaConfiguration)
+    .then(stream => {
+        connection.addStream(stream);
+        localVideo.srcObject = stream;
+    })
+    .catch(onError);
 
 $(createRoom).click(function () {
-    var name = roomName.value;
-    signalling.invoke("CreateRoom", name).catch(function (err) {
-        alert(err.toString());
-    });
+    const name = roomName.value;
+    signalling.invoke("CreateRoom", name).catch(onError);
 });
 
 signalling.start().then(function () {
@@ -99,9 +91,7 @@ signalling.start().then(function () {
     signalling.invoke("GetRooms").catch(function (err) {
         alert(err.toString());
     });
-}).catch(function (err) {
-    alert(err.toString());
-});
+}).catch(onError);
 
 function connectPeers() {
     connection.onicecandidate = function (event) {
@@ -116,10 +106,7 @@ function connectPeers() {
 
     if (room.Initiating) {
         console.log("Starting peer to peer connection as initializator");
-
-        connection.createOffer(onLocalSessionCreated, function (err) {
-            alert(err.toString());
-        });
+        connection.createOffer(onLocalSessionCreated, onError);
     }
     else {
         console.log("Waiting for connection to start");
@@ -129,12 +116,12 @@ function connectPeers() {
 function signalingMessageCallback(message) {
     if (message.type === 'offer') {
         console.log('Got offer. Sending answer to peer.');
-        connection.setRemoteDescription(new RTCSessionDescription(message), function () { }, logError);
-        connection.createAnswer(onLocalSessionCreated, logError);
+        connection.setRemoteDescription(new RTCSessionDescription(message), function () { }, onError);
+        connection.createAnswer(onLocalSessionCreated, onError);
 
     } else if (message.type === 'answer') {
         console.log('Got answer.');
-        connection.setRemoteDescription(new RTCSessionDescription(message), function () { }, logError);
+        connection.setRemoteDescription(new RTCSessionDescription(message), function () { }, onError);
 
     } else if (message.type === 'candidate') {
         connection.addIceCandidate(new RTCIceCandidate({
@@ -145,21 +132,19 @@ function signalingMessageCallback(message) {
 
 function onLocalSessionCreated(desc) {
     console.log('local session created:', desc);
-    connection.setLocalDescription(desc, function () { }, logError);
+    connection.setLocalDescription(desc, function () { }, onError);
 }
 
 function sendMessage(message) {
     console.log(`Client sending a message to the room: ${message}`, message);
-    signalling.invoke("SendMessage", room.Id, message).catch(function (err) {
-        alert(err.toString());
-    });
+    signalling.invoke("SendMessage", room.Id, message).catch(onError);
 }
 
-function logError(err) {
+function onError(err) {
     if (!err) return;
     if (typeof err === 'string') {
-        console.warn(err);
+        console.error(err);
     } else {
-        console.warn(err.toString(), err);
+        console.error(err.toString(), err);
     }
 }
