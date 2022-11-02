@@ -119,27 +119,23 @@ signalling.start().then(function () {
 
     signalling.on('Message', function (message) {
         console.log('Client received message:', message);
-        signalingMessageCallback(message);
+        if (message.type === 'offer') {
+            console.log('Got offer. Sending answer to peer.');
+            connection.setRemoteDescription(new RTCSessionDescription(message), function () { }, onError);
+            connection.createAnswer(onLocalSessionCreated, onError);
+
+        } else if (message.type === 'answer') {
+            console.log('Got answer.');
+            connection.setRemoteDescription(new RTCSessionDescription(message), function () { }, onError);
+
+        } else if (message.type === 'candidate') {
+            console.log(`Got new candidate from remote peer`);
+            connection.addIceCandidate(new RTCIceCandidate({
+                candidate: message.candidate
+            }));
+        }
     });
 }).catch(onError);
-
-function signalingMessageCallback(message) {
-    if (message.type === 'offer') {
-        console.log('Got offer. Sending answer to peer.');
-        connection.setRemoteDescription(new RTCSessionDescription(message), function () { }, onError);
-        connection.createAnswer(onLocalSessionCreated, onError);
-
-    } else if (message.type === 'answer') {
-        console.log('Got answer.');
-        connection.setRemoteDescription(new RTCSessionDescription(message), function () { }, onError);
-
-    } else if (message.type === 'candidate') {
-        console.log(`Got new candidate from remote peer`);
-        connection.addIceCandidate(new RTCIceCandidate({
-            candidate: message.candidate
-        }));
-    }
-}
 
 function onLocalSessionCreated(desc) {
     console.log('local session created:', desc);
