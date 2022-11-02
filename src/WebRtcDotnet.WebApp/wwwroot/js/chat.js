@@ -90,7 +90,7 @@ signalling.start().then(function () {
 
 function connectPeers() {
     connection.onicecandidate = function (event) {
-        console.log('icecandidate event:', event);
+        console.log(`icecandidate event of type ${event.type}:`, event);
         if (event.candidate) {
             sendMessage({
                 type: 'candidate',
@@ -129,6 +129,7 @@ function signalingMessageCallback(message) {
         connection.setRemoteDescription(new RTCSessionDescription(message), function () { }, onError);
 
     } else if (message.type === 'candidate') {
+        console.log(`Got new candidate from remote peer`);
         connection.addIceCandidate(new RTCIceCandidate({
             candidate: message.candidate
         }));
@@ -138,12 +139,12 @@ function signalingMessageCallback(message) {
 function onLocalSessionCreated(desc) {
     console.log('local session created:', desc);
     connection.setLocalDescription(desc, function () {
-        console.log('sending local desc:', connection.localDescription);
+        console.log('sending local desciption:', connection.localDescription);
         sendMessage(connection.localDescription);
     }, onError);}
 
 function sendMessage(message) {
-    console.log(`Client sending a message to the room: ${room.Id} ${message}`);
+    console.log(`Client sending a message to the room: ${room.Id}`);
     signalling.invoke("SendMessage", room.Id, message).catch(onError);
 }
 
