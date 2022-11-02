@@ -91,7 +91,17 @@ signalling.start().then(function () {
 function connectPeers() {
     connection.onicecandidate = function (event) {
         console.log('icecandidate event:', event);
-        sendMessage(connection.localDescription);
+        if (event.candidate) {
+            sendMessage({
+                type: 'candidate',
+                label: event.candidate.sdpMLineIndex,
+                id: event.candidate.sdpMid,
+                candidate: event.candidate.candidate
+            });
+        } else {
+            console.log('End of candidates.');
+            sendMessage(connection.localDescription);
+        }
     };
 
     connection.ontrack = function (event) {
@@ -127,8 +137,10 @@ function signalingMessageCallback(message) {
 
 function onLocalSessionCreated(desc) {
     console.log('local session created:', desc);
-    connection.setLocalDescription(desc, function () { }, onError);
-}
+    connection.setLocalDescription(desc, function () {
+        console.log('sending local desc:', connection.localDescription);
+        sendMessage(connection.localDescription);
+    }, onError);}
 
 function sendMessage(message) {
     console.log(`Client sending a message to the room: ${room.Id} ${message}`);
