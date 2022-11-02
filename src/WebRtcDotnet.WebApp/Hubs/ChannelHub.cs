@@ -27,24 +27,24 @@ public class ChannelHub : Hub
         using (await Mutex.LockAsync())
         {
             var changed = false;
+            var emptyRooms = new List<RoomDTO>();
             foreach (var room in Rooms.Where(x => x.Participants.Contains(Context.ConnectionId)))
             {
                 _logger.LogDebug("Removing participant {clientId} from room {roomId}", Context.ConnectionId, room.Id);
                 room.Participants.Remove(Context.ConnectionId);
+                changed = true;
 
-                if (room.Participants.Count == 0)
-                {
-                    _logger.LogInformation("Removing room {roomId}", room.Id);
-                    Rooms.Remove(room);
-                }
+                if (!room.Participants.Any()) emptyRooms.Add(room);
+            }
 
+            if (emptyRooms.Any())
+            {
+                foreach (var room in emptyRooms) Rooms.Remove(room);
                 changed = true;
             }
 
-            if (changed)
-            {
-                await RaiseRoomsUpdated();
-            }
+
+            if (changed) await RaiseRoomsUpdated();
         }
 
         await base.OnDisconnectedAsync(exception);
@@ -82,6 +82,12 @@ public class ChannelHub : Hub
             if (room.Participants.Contains(Context.ConnectionId))
             {
                 _logger.LogInformation("Participant {clientId} already joined the channel", Context.ConnectionId);
+                return;
+            }
+
+            if (Rooms.Any(x => x.Participants.Contains(Context.ConnectionId)))
+            {
+                _logger.LogInformation("Participant {clientId} already joined the another channel", Context.ConnectionId);
                 return;
             }
 
