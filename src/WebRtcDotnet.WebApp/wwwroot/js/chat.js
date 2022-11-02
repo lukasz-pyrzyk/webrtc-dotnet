@@ -48,6 +48,34 @@ const connection = new RTCPeerConnection({
     }]
 });
 
+connection.onconnectionstatechange = (ev) => {
+    switch (connection.connectionState) {
+        case "new":
+        case "checking":
+            setOnlineStatus("Connecting…");
+            break;
+        case "connected":
+            setOnlineStatus("Online");
+            break;
+        case "disconnected":
+            setOnlineStatus("Disconnecting…");
+            break;
+        case "closed":
+            setOnlineStatus("Offline");
+            break;
+        case "failed":
+            setOnlineStatus("Error");
+            break;
+        default:
+            setOnlineStatus(connection.connectionState);
+            break;
+    }
+}
+
+function setOnlineStatus(status) {
+    console.info(status);
+}
+
 connection.onicecandidate = function (event) {
     console.log(`icecandidate event of type ${event.type}:`, event);
     if (event.candidate) {
