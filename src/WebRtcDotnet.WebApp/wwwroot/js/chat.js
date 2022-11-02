@@ -37,37 +37,52 @@ $('#rooms tbody').on('click', '.leave', function () {
     room.Initiating = null;
 });
 
-const configuration = {
+$(createRoom).click(function () {
+    const name = roomName.value;
+    signalling.invoke("CreateRoom", name).catch(onError);
+});
+
+const connection = new RTCPeerConnection({
     'iceServers': [{
         'urls': 'stun:stun.l.google.com:19302'
     }]
+});
+
+connection.onicecandidate = function (event) {
+    console.log(`icecandidate event of type ${event.type}:`, event);
+    if (event.candidate) {
+        sendMessage({
+            type: 'candidate',
+            label: event.candidate.sdpMLineIndex,
+            id: event.candidate.sdpMid,
+            candidate: event.candidate.candidate
+        });
+    } else {
+        console.log('End of candidates.');
+        sendMessage(connection.localDescription);
+    }
 };
 
-const connection = new RTCPeerConnection(configuration);
-
-const mediaConfiguration = {
-    audio: true,
-    video: true
-}
+connection.ontrack = function (event) {
+    console.log('icecandidate ontrack event:', event);
+    remoteVideo.srcObject = event.streams[0];
+};
 
 navigator.mediaDevices
-    .getUserMedia(mediaConfiguration)
+    .getUserMedia({
+        audio: true,
+        video: true
+    })
     .then(stream => {
         connection.addStream(stream);
         localVideo.srcObject = stream;
     })
     .catch(onError);
 
-$(createRoom).click(function () {
-    const name = roomName.value;
-    signalling.invoke("CreateRoom", name).catch(onError);
-});
-
 signalling.start().then(function () {
     signalling.invoke("GetRooms").catch(onError);
 
     signalling.on('RoomsUpdated', function (receivedRooms) {
-
         const rows = receivedRooms.map(x => {
             return {
                 Id: x.id,
@@ -93,7 +108,13 @@ signalling.start().then(function () {
 
     signalling.on('Ready', function () {
         console.log("Room ready, both participants are present");
-        connectPeers();
+        if (room.Initiating) {
+            console.log("Starting peer to peer connection as initializator");
+            connection.createOffer(onLocalSessionCreated, onError);
+        }
+        else {
+            console.log("Waiting for connection to start");
+        }
     });
 
     signalling.on('Message', function (message) {
@@ -101,36 +122,6 @@ signalling.start().then(function () {
         signalingMessageCallback(message);
     });
 }).catch(onError);
-
-function connectPeers() {
-    connection.onicecandidate = function (event) {
-        console.log(`icecandidate event of type ${event.type}:`, event);
-        if (event.candidate) {
-            sendMessage({
-                type: 'candidate',
-                label: event.candidate.sdpMLineIndex,
-                id: event.candidate.sdpMid,
-                candidate: event.candidate.candidate
-            });
-        } else {
-            console.log('End of candidates.');
-            sendMessage(connection.localDescription);
-        }
-    };
-
-    connection.ontrack = function (event) {
-        console.log('icecandidate ontrack event:', event);
-        remoteVideo.srcObject = event.streams[0];
-    };
-
-    if (room.Initiating) {
-        console.log("Starting peer to peer connection as initializator");
-        connection.createOffer(onLocalSessionCreated, onError);
-    }
-    else {
-        console.log("Waiting for connection to start");
-    }
-}
 
 function signalingMessageCallback(message) {
     if (message.type === 'offer') {
@@ -155,7 +146,8 @@ function onLocalSessionCreated(desc) {
     connection.setLocalDescription(desc, function () {
         console.log('sending local desciption:', connection.localDescription);
         sendMessage(connection.localDescription);
-    }, onError);}
+    }, onError);
+}
 
 function sendMessage(message) {
     console.log(`Client sending a message to the room: ${room.Id}`);
