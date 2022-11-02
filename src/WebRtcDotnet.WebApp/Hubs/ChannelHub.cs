@@ -63,7 +63,7 @@ public class ChannelHub : Hub
 
         await Groups.AddToGroupAsync(Context.ConnectionId, roomId);
         var isFirstClient = room.Participants.Count == 1;
-        await Clients.Caller.SendAsync("Joined", isFirstClient);
+        await Clients.Caller.SendAsync("Joined", roomId, isFirstClient);
         _logger.LogInformation("Participant {clientId} joined the room {roomId}", Context.ConnectionId, roomId);
 
         if (room.Participants.Count == 2)
@@ -75,7 +75,7 @@ public class ChannelHub : Hub
 
     public async Task SendMessage(string roomId, object message)
     {
-        await Clients.OthersInGroup(roomId).SendAsync("message", message);
+        await Clients.OthersInGroup(roomId).SendAsync("Message", message);
     }
 
     public async Task GetRooms()
