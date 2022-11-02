@@ -25,9 +25,7 @@ $(rooms).DataTable({
 
 $('#rooms tbody').on('click', 'button', function () {
     const data = $(rooms).DataTable().row($(this).parents('tr')).data();
-    signalling.invoke("Join", data.Id).catch(function (err) {
-        return console.error(err.toString());
-    });
+    signalling.invoke("Join", data.Id).catch(onError);
 });
 
 const configuration = {
@@ -57,6 +55,8 @@ $(createRoom).click(function () {
 });
 
 signalling.start().then(function () {
+    signalling.invoke("GetRooms").catch(onError);
+
     signalling.on('RoomsUpdated', function (receivedRooms) {
         var rows = receivedRooms.map(x => {
             return {
@@ -86,10 +86,6 @@ signalling.start().then(function () {
     signalling.on('Message', function (message) {
         console.log('Client received message:', message);
         signalingMessageCallback(message);
-    });
-
-    signalling.invoke("GetRooms").catch(function (err) {
-        alert(err.toString());
     });
 }).catch(onError);
 
@@ -136,7 +132,7 @@ function onLocalSessionCreated(desc) {
 }
 
 function sendMessage(message) {
-    console.log(`Client sending a message to the room: ${message}`, message);
+    console.log(`Client sending a message to the room: ${room.Id} ${message}`);
     signalling.invoke("SendMessage", room.Id, message).catch(onError);
 }
 
