@@ -79,7 +79,6 @@ signalling.start().then(function () {
 
     signalling.on('Ready', function () {
         console.log("Room ready, both participants are present");
-
         connectPeers();
     });
 
