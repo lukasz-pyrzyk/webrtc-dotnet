@@ -13,7 +13,8 @@ $(rooms).DataTable({
     columns: [
         { data: 'Id', title: 'Id', width: "15%" },
         { data: 'Name', title: "Name" },
-        { data: 'Button', title: "Options", width: "15%" },
+        { data: 'Participants', title: "Participants" },
+        { data: 'Button', title: "Options", width: "15%" }
     ],
     paging: false,
     lengthChange: false,
@@ -62,8 +63,8 @@ signalling.start().then(function () {
             return {
                 Id: x.id,
                 Name: x.name,
+                Participants: x.participants.join(", "),
                 Button: "<button>Join</button>"
-
             }
         });
 
