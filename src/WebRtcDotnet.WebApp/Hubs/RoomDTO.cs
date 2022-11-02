@@ -1,3 +1,3 @@
 ﻿namespace WebRtcDotnet.WebApp.Hubs;
 
-record RoomDTO(int Id, string Name);
+record RoomDTO(string Id, string Name, List<string> Participants);
