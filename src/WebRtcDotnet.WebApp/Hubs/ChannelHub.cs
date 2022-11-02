@@ -74,7 +74,7 @@ public class ChannelHub : Hub
 
     public async Task SendMessage(string roomId, object message)
     {
-        _logger.LogInformation("Sending message to the room {roomId} {message}", roomId, message);
+        _logger.LogInformation("Client {clientId} sending message to the room {roomId} {message}", Context.ConnectionId, roomId, message);
         await Clients.OthersInGroup(roomId).SendAsync("Message", message);
     }
 
