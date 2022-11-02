@@ -26,7 +26,6 @@ $(rooms).DataTable({
 
 $('#rooms tbody').on('click', '.join', function () {
     const data = $(rooms).DataTable().row($(this).parents('tr')).data();
-    $(this).hide();
     signalling.invoke("Join", data.Id).catch(onError);
 });
 
@@ -82,6 +81,11 @@ signalling.start().then(function () {
     });
 
     signalling.on('Joined', function (roomId, firstClient) {
+        if (!roomId) {
+            conso.err("Joining failed");
+            return;
+        }
+
         room.Id = roomId;
         room.Initiating = firstClient;
         console.log(`Joined room ${room.Id}, initiating: ${room.Initiating}`);
