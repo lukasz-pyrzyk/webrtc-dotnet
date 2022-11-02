@@ -14,7 +14,7 @@ $(rooms).DataTable({
         { data: 'Id', title: 'Id', width: "15%" },
         { data: 'Name', title: "Name" },
         { data: 'Participants', title: "Participants" },
-        { data: 'Button', title: "Options", width: "15%" }
+        { data: 'Buttons', title: "Options", width: "15%" }
     ],
     paging: false,
     lengthChange: false,
@@ -24,8 +24,9 @@ $(rooms).DataTable({
     }
 });
 
-$('#rooms tbody').on('click', 'button', function () {
+$('#rooms tbody').on('click', '.joined', function () {
     const data = $(rooms).DataTable().row($(this).parents('tr')).data();
+    $(this).hide();
     signalling.invoke("Join", data.Id).catch(onError);
 });
 
@@ -64,7 +65,7 @@ signalling.start().then(function () {
                 Id: x.id,
                 Name: x.name,
                 Participants: x.participants.join(", "),
-                Button: "<button>Join</button>"
+                Buttons: x.participants.includes(signalling.connectionId) ? "<button class=\"joined\" disabled>Join</button><button class=\"leave\">Leave</button>" : "<button class=\"joined\">Join</button><button class=\"leave\" disabled>Leave</button>"
             }
         });
 
@@ -74,8 +75,7 @@ signalling.start().then(function () {
     signalling.on('Joined', function (roomId, firstClient) {
         room.Id = roomId;
         room.Initiating = firstClient;
-        console.log(`Joined room ${room.Id}, initiating: ${room.Initiating}`)
-        $("#roomsContainer").hide();
+        console.log(`Joined room ${room.Id}, initiating: ${room.Initiating}`);
     });
 
     signalling.on('Ready', function () {

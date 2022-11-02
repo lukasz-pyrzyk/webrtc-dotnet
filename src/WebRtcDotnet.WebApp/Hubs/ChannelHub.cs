@@ -79,6 +79,12 @@ public class ChannelHub : Hub
                 return;
             }
 
+            if (room.Participants.Contains(Context.ConnectionId))
+            {
+                _logger.LogInformation("Participant {clientId} already joined the channel", Context.ConnectionId);
+                return;
+            }
+
             _logger.LogDebug("Adding participant {clientId} to the room {roomId}", Context.ConnectionId, roomId);
             room.Participants.Add(Context.ConnectionId);
 
