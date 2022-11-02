@@ -24,10 +24,18 @@ $(rooms).DataTable({
     }
 });
 
-$('#rooms tbody').on('click', '.joined', function () {
+$('#rooms tbody').on('click', '.join', function () {
     const data = $(rooms).DataTable().row($(this).parents('tr')).data();
     $(this).hide();
     signalling.invoke("Join", data.Id).catch(onError);
+});
+
+$('#rooms tbody').on('click', '.leave', function () {
+    const data = $(rooms).DataTable().row($(this).parents('tr')).data();
+    $(this).hide();
+    signalling.invoke("Leave", data.Id).catch(onError);
+    room.Id = null;
+    room.Initiating = null;
 });
 
 const configuration = {
@@ -60,12 +68,13 @@ signalling.start().then(function () {
     signalling.invoke("GetRooms").catch(onError);
 
     signalling.on('RoomsUpdated', function (receivedRooms) {
-        var rows = receivedRooms.map(x => {
+
+        const rows = receivedRooms.map(x => {
             return {
                 Id: x.id,
                 Name: x.name,
                 Participants: x.participants.join(", "),
-                Buttons: x.participants.includes(signalling.connectionId) ? "<button class=\"joined\" disabled>Join</button><button class=\"leave\">Leave</button>" : "<button class=\"joined\">Join</button><button class=\"leave\" disabled>Leave</button>"
+                Buttons: x.participants.includes(signalling.connectionId) ? "<button class=\"join\" disabled>Join</button><button class=\"leave\">Leave</button>" : "<button class=\"join\">Join</button><button class=\"leave\" disabled>Leave</button>"
             }
         });
 
