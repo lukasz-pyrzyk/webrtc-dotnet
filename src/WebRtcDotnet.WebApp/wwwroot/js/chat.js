@@ -148,20 +148,24 @@ signalling.start().then(function () {
         }
     });
     signalling.on('Message', async function (message) {
-        console.log('Client received message:', message);
         if (message.type === 'offer') {
-            console.log('Got offer. Sending answer to peer.');
+            console.log('Got offer. Sending answer to peer.', message);
             await connection.setRemoteDescription(new RTCSessionDescription(message));
             await connection.createAnswer();
             await onLocalSessionCreated();
         } else if (message.type === 'answer') {
-            console.log('Got answer.');
+            console.log('Got answer.', message);
             await connection.setRemoteDescription(new RTCSessionDescription(message));
-        } else if (message.type === 'candidate') {
-            console.log(`Got new candidate from remote peer`);
-            await connection.addIceCandidate(new RTCIceCandidate({
-                candidate: message.candidate
-            }));
+        } else if (message.type === 'candidate' && message.candidate) {
+            console.log(`Got new candidate from remote peer`, message);
+            if (connection.remoteDescription) {
+                const candidate = new RTCIceCandidate({
+                    candidate: message.candidate
+                });
+                if (candidate) {
+                    await connection.addIceCandidate(candidate);
+                }
+            }
         }
     });
 }).catch(onError);
