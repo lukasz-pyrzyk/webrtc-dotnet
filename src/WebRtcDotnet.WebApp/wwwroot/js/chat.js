@@ -125,7 +125,7 @@ signalling.start().then(function () {
 
     signalling.on('Joined', function (roomId, firstClient) {
         if (!roomId) {
-            conso.err("Joining failed");
+            console.err("Joining failed");
             return;
         }
 
