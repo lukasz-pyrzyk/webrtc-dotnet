@@ -147,16 +147,16 @@ signalling.start().then(function () {
         }
     });
 
-    signalling.on('Message', function (message) {
+    signalling.on('Message', async function (message) {
         console.log('Client received message:', message);
         if (message.type === 'offer') {
             console.log('Got offer. Sending answer to peer.');
-            connection.setRemoteDescription(new RTCSessionDescription(message), function () { }, onError);
+            await connection.setRemoteDescription(new RTCSessionDescription(message));
             connection.createAnswer(onLocalSessionCreated, onError);
 
         } else if (message.type === 'answer') {
             console.log('Got answer.');
-            connection.setRemoteDescription(new RTCSessionDescription(message), function () { }, onError);
+            await connection.setRemoteDescription(new RTCSessionDescription(message));
 
         } else if (message.type === 'candidate') {
             console.log(`Got new candidate from remote peer`);
