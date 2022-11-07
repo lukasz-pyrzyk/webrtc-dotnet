@@ -102,7 +102,9 @@ navigator.mediaDevices
         video: true
     })
     .then(stream => {
-        connection.addStream(stream);
+        stream.getTracks().forEach((track) => {
+            connection.addTrack(track, stream);
+        });
         localVideo.srcObject = stream;
     })
     .catch(onError);
