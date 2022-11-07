@@ -156,14 +156,20 @@ signalling.start().then(function () {
         } else if (message.type === 'answer') {
             console.log('Got answer.', message);
             await connection.setRemoteDescription(new RTCSessionDescription(message));
-        } else if (message.type === 'candidate' && message.candidate) {
+        } else if (message.type === 'candidate') {
             console.log(`Got new candidate from remote peer`, message);
-            if (connection.remoteDescription) {
-                const candidate = new RTCIceCandidate({
-                    candidate: message.candidate
-                });
-                if (candidate) {
-                    await connection.addIceCandidate(candidate);
+            if (connection.signalingState !== "stable") { // wait for remote description. We should also queue incoming ice servers until we got the remote into
+                if (message.candidate === '') {
+                    // it end of the candidates, set empty candidate
+                    console.log("Adding empty candidate");
+                    connection.addIceCandidate({ candidate: '' }).catch((e) => {
+                        console.log(`Failure during addIceCandidate(): ${e.name}`);
+                    });
+                }
+                else {
+                    connection.addIceCandidate(new RTCIceCandidate({ candidate: message.candidate })).catch((e) => {
+                        console.log(`Failure during addIceCandidate(): ${e.name}`);
+                    });
                 }
             }
         }
