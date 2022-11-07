@@ -167,9 +167,11 @@ signalling.start().then(function () {
                     });
                 }
                 else {
-                    connection.addIceCandidate(new RTCIceCandidate({ candidate: message.candidate })).catch((e) => {
-                        console.log(`Failure during addIceCandidate(): ${e.name}`);
-                    });
+                    try {
+                        await connection.addIceCandidate(new RTCIceCandidate({ candidate: message.candidate }));
+                    } catch (e) {
+                        console.error(`Unable to add ice candidate`, message.candidate);
+                    }
                 }
             }
         }
