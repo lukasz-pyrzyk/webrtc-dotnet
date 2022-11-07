@@ -127,7 +127,7 @@ signalling.start().then(function () {
 
     signalling.on('Joined', function (roomId, firstClient) {
         if (!roomId) {
-            console.err("Joining failed");
+            console.error("Joining failed");
             return;
         }
 
@@ -136,43 +136,41 @@ signalling.start().then(function () {
         console.log(`Joined room ${room.Id}, initiating: ${room.Initiating}`);
     });
 
-    signalling.on('Ready', function () {
+    signalling.on('Ready', async function () {
         console.log("Room ready, both participants are present");
         if (room.Initiating) {
             console.log("Starting peer to peer connection as initializator");
-            connection.createOffer(onLocalSessionCreated, onError);
+            await connection.createOffer();
+            await onLocalSessionCreated();
         }
         else {
             console.log("Waiting for connection to start");
         }
     });
-
     signalling.on('Message', async function (message) {
         console.log('Client received message:', message);
         if (message.type === 'offer') {
             console.log('Got offer. Sending answer to peer.');
             await connection.setRemoteDescription(new RTCSessionDescription(message));
-            connection.createAnswer(onLocalSessionCreated, onError);
-
+            await connection.createAnswer();
+            await onLocalSessionCreated();
         } else if (message.type === 'answer') {
             console.log('Got answer.');
             await connection.setRemoteDescription(new RTCSessionDescription(message));
-
         } else if (message.type === 'candidate') {
             console.log(`Got new candidate from remote peer`);
-            connection.addIceCandidate(new RTCIceCandidate({
+            await connection.addIceCandidate(new RTCIceCandidate({
                 candidate: message.candidate
             }));
         }
     });
 }).catch(onError);
 
-function onLocalSessionCreated(desc) {
+async function onLocalSessionCreated(desc) {
     console.log('local session created:', desc);
-    connection.setLocalDescription(desc, function () {
-        console.log('sending local desciption:', connection.localDescription);
-        sendMessage(connection.localDescription);
-    }, onError);
+    await connection.setLocalDescription(desc);
+    console.log('sending local description:', connection.localDescription);
+    sendMessage(connection.localDescription);
 }
 
 function sendMessage(message) {
