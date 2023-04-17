@@ -43,9 +43,18 @@ $(createRoom).click(function () {
 });
 
 const connection = new RTCPeerConnection({
-    'iceServers': [{
-        'urls': 'stun:stun.l.google.com:19302'
-    }]
+    iceServers: [
+        {
+            urls: "stun.l.google.com:19302",
+        },        {
+            urls: "stun:20.218.119.246",
+        },
+        {
+            urls: "turn:20.218.119.246",
+            username: "username1",
+            credential: "key1",
+        },
+    ]
 });
 
 connection.onconnectionstatechange = (ev) => {
