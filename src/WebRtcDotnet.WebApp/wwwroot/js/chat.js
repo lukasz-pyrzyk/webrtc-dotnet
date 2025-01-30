@@ -48,7 +48,7 @@ const connection = new RTCPeerConnection({
             urls: "stun:stun.l.google.com:19302",
         },
         {
-            urls: "turn:20.218.119.246",
+            urls: "turn:20.160.188.245",
             username: "username1",
             credential: "key1",
         },
