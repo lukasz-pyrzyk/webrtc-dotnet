@@ -103,18 +103,56 @@ connection.ontrack = function (event) {
     remoteVideo.srcObject = event.streams[0];
 };
 
-navigator.mediaDevices
-    .getUserMedia({
-        audio: true,
-        video: true
-    })
-    .then(stream => {
-        stream.getTracks().forEach((track) => {
+async function startMediaStream() {
+    try {
+        console.log("Requesting media stream...");
+
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            throw new Error("getUserMedia is not supported in this browser.");
+        }
+
+        const constraints = {
+            audio: true,
+            video: {
+                width: { ideal: 1280 },
+                height: { ideal: 720 },
+                facingMode: "user"
+            }
+        };
+
+        const stream = await navigator.mediaDevices.getUserMedia(constraints);
+        console.log("Media stream acquired.", stream);
+
+        stream.getTracks().forEach(track => {
+            console.log(`Adding track: ${track.kind}`);
             connection.addTrack(track, stream);
         });
-        localVideo.srcObject = stream;
-    })
-    .catch(onError);
+
+        if (localVideo) {
+            localVideo.srcObject = stream;
+            console.log("Video stream assigned to localVideo element.");
+        } else {
+            console.error("localVideo element not found.");
+        }
+    } catch (error) {
+        console.error("Error accessing media devices:", error);
+
+        if (error.name === "NotFoundError" || error.name === "DevicesNotFoundError") {
+            alert("No camera or microphone found. Please check your devices.");
+        } else if (error.name === "NotReadableError" || error.name === "TrackStartError") {
+            alert("Camera or microphone is already in use by another application.");
+        } else if (error.name === "NotAllowedError" || error.name === "PermissionDeniedError") {
+            alert("Permission to access camera/microphone was denied.");
+        } else if (error.name === "OverconstrainedError" || error.name === "ConstraintNotSatisfiedError") {
+            alert("Requested media constraints cannot be satisfied. Try different settings.");
+        } else {
+            alert("An unknown error occurred while accessing media devices.");
+        }
+    }
+}
+
+startMediaStream();
+
 
 signalling.start().then(function () {
     signalling.invoke("GetRooms").catch(onError);
